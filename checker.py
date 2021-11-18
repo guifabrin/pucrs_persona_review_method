@@ -25,14 +25,6 @@ numbers_dictionary = [
     ["erstellt", "persona"],
 ]
 
-exactly_partials = [
-    "personas were created",
-
-    "foram criadas personas",
-
-    "la personas fue creada"
-]
-
 
 def check(filename):
     with open(filename, 'rb') as f:
@@ -53,11 +45,13 @@ def get_between(string, init, end):
 
 
 def tests(text):
-    for test in exactly_partials:
-        if test in text:
-            return True
     for item in numbers_dictionary:
         matches = get_between(text, item[0], item[1])
+        for match in matches:
+            words = match.split(' ')
+            if len(words) < 10:
+                return True
+        matches = get_between(text, item[1], item[0])
         for match in matches:
             words = match.split(' ')
             if len(words) < 10:
@@ -67,6 +61,9 @@ def tests(text):
 
 def process(filename, text_filename):
     pdf = pdfplumber.open(filename)
+    if len(pdf.pages) > 50:
+        pdf.close()
+        return False
     text = ''
     if os.path.exists(text_filename):
         f = open(text_filename, "r", encoding="utf-8")
@@ -91,6 +88,7 @@ def search(path="downloads\\", move=False, skip_processed=False):
     with_error = 0
     files = os.listdir(path)
     for f in files:
+        gc.collect()
         if not f.endswith('.pdf'):
             continue
         filename = os.path.join(path, f)
@@ -106,19 +104,17 @@ def search(path="downloads\\", move=False, skip_processed=False):
                     contains += 1
                     print("[" + filename + "] contain regex.")
                     if move:
-                        os.rename(filename, "downloads\\maybe\\" + f)
+                        os.rename(filename, path+"maybe\\" + f)
                 else:
                     not_contains += 1
-                    print("[" + filename + "] does not contain regexes.")
+                    print("[" + filename + "] does not contain requirements.")
                     if move:
-                        os.rename(filename, "downloads\\not_contains\\" + f)
+                        os.rename(filename, path+"not_contains\\" + f)
             else:
-                print(filename + " is invalid, will be deleted.")
-                os.unlink(filename)
-            gc.collect()
+                os.rename(filename, path+"error\\" + f)
         except Exception as e:
             print('Error', e)
-            os.rename(filename, "downloads\\error\\" + f)
+            os.rename(filename, path+"error\\" + f)
             with_error+=1
         print("Results: {} contains, {} not contains, {} with error".format(contains, not_contains, with_error))
 

@@ -24,7 +24,7 @@ def slugify(value, allow_unicode=False):
     value = re.sub(r'[^\w\s-]', '', value.lower())
     return re.sub(r'[-\s]+', '-', value).strip('-_')
 
-scrapper_path = "srappers\\"
+scrapper_path = "scrappers\\"
 onlyfiles = [f for f in listdir(scrapper_path) if isfile(join(scrapper_path, f)) and f.endswith(".json")]
 
 pdfs = []
