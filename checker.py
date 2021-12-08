@@ -61,9 +61,6 @@ def tests(text):
 
 def process(filename, text_filename):
     pdf = pdfplumber.open(filename)
-    if len(pdf.pages) > 50:
-        pdf.close()
-        return False
     text = ''
     if os.path.exists(text_filename):
         f = open(text_filename, "r", encoding="utf-8")
@@ -102,7 +99,7 @@ def search(path="downloads\\", move=False, skip_processed=False):
                 print("[" + filename + "] processing.")
                 if process(filename, text_filename):
                     contains += 1
-                    print("[" + filename + "] contain regex.")
+                    print("[" + filename + "] contain requirements.")
                     if move:
                         os.rename(filename, path+"maybe\\" + f)
                 else:

@@ -1,6 +1,5 @@
 import json
 import requests as requests
-from concurrent.futures import ThreadPoolExecutor
 from os import listdir
 from os.path import isfile, join
 import unicodedata
@@ -24,6 +23,13 @@ def slugify(value, allow_unicode=False):
     value = re.sub(r'[^\w\s-]', '', value.lower())
     return re.sub(r'[-\s]+', '-', value).strip('-_')
 
+
+def download(url, filename):
+    print("Downloading ", filename)
+    r = requests.get(url, allow_redirects=True)
+    open(filename, 'wb').write(r.content)
+
+
 scrapper_path = "scrappers\\"
 onlyfiles = [f for f in listdir(scrapper_path) if isfile(join(scrapper_path, f)) and f.endswith(".json")]
 
@@ -35,19 +41,30 @@ for file in onlyfiles:
         pdfs.append(item)
     f.close()
 
+unique_pdfs = []
+unique_names = []
 
-def download(url, filename):
-    print("Downloading ", filename)
-    r = requests.get(url, allow_redirects=True)
-    open(filename, 'wb').write(r.content)
+for pdf in pdfs:
+    if pdf['title'] in unique_names:
+        continue
+    unique_pdfs.append(pdf)
+    unique_names.append(pdf['title'])
 
-
-with ThreadPoolExecutor() as executor:
-    futures = []
-    for pdf in pdfs:
-        try:
-            filename = "downloads\\" + slugify(pdf['name'].replace('.pdf', '')) + '.pdf'
-            if not exists(filename):
-                futures.append(executor.submit(download, url=pdf['href'], filename=filename))
-        except:
-            print("Error ", pdf['name'])
+error = 0
+skipped = 0
+downloaded = 0
+for pdf in unique_pdfs:
+    try:
+        filename = "downloads\\" + slugify(pdf['title'].replace('[PDF]', '')) + '.pdf'
+        if exists(filename):
+            downloaded += 1
+            continue
+        if pdf['year'] is not None and pdf['year'] >= 2019:
+            download(url=pdf['url'], filename=filename)
+            downloaded += 1
+        else:
+            skipped += 1
+    except:
+        error += 1
+        print("Error ", pdf['title'])
+print(downloaded, skipped, error, downloaded + skipped + error)
